@@ -210,11 +210,11 @@ class ComFilesDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
 		
 		$sanitized = $filter->sanitize($file['name']);
 
-		// Check for duplicate file names
+		// Check for duplicate file names and rename by prepending a number
 		$i=null;
 		if (JFile::exists($filepath.$sanitized)) {
 			$i=0; 
-			do { $sanitized = $sanitized.$i++; } while (JFile::exists($filepath.$sanitized));	
+			do { $sanitized = $i++.'-'.$sanitized; } while (JFile::exists($filepath.$sanitized));	
 		}
 		
 		// Store the filepath into the database
