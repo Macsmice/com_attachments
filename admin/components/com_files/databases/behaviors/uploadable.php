@@ -31,6 +31,7 @@ class ComFilesDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
 	protected $_separator;
 	protected $_filename;
 	protected $_store;
+	protected $_store_full_path;
 	
 	/**
 	 * Constructor.
@@ -62,23 +63,24 @@ class ComFilesDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
     	 * Get (some of) these values through component's parameters
     	 */
     	$config->append(array(
-    		'files'   		=> KRequest::get('files', 'raw'),
-    		'file_path' 	=> 'media/com_files/raw/',
-    		'max_size'		=> 4194304,
-    		'allowed_mime' 	=> array(
-				    			'image/jpeg', 
-				    			'image/jpg', 
-				    			'image/png', 
-				    			'image/gif', 
-				    			'application/pdf',
-    							'application/zip', 
-				    			'application/msword', 
-				    			'application/vnd.ms-excel', 
-				    			'application/octet-stream'
-    							),
-    		'separator' 	=> '-',
-    		'filename'  	=> '',
-			'store'			=> true
+    		'files'   			=> KRequest::get('files', 'raw'),
+    		'file_path' 		=> 'media/com_files/raw/',
+    		'max_size'			=> 4194304,
+	    	'allowed_mime' 		=> array(
+					    			'image/jpeg', 
+					    			'image/jpg', 
+					    			'image/png', 
+					    			'image/gif', 
+					    			'application/pdf',
+	    							'application/zip', 
+					    			'application/msword', 
+					    			'application/vnd.ms-excel', 
+					    			'application/octet-stream'
+	    							),
+    		'separator' 		=> '-',
+    		'filename'  		=> '',
+			'store'				=> true,
+    		'store_full_path'	=> true
     	));
 
     	parent::_initialize($config);

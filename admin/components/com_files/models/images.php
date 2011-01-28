@@ -4,6 +4,7 @@ class ComFilesModelImages extends KModelState
 	protected $_original;
 	protected $_src;
 	protected $_info;
+	protected $_file_path;
 	protected $_base_path;
 	
 	public function __construct(KConfig $config)
@@ -59,28 +60,153 @@ class ComFilesModelImages extends KModelState
 	}
 	
 	/**
-	 * Displays the image
+	 * Displays the image directly to the browser
 	 * 
+	 * return void
 	 */
-	public function display($config = array())
+	public function displayToBrowser($config = array())
 	{
 		$config = new KConfig($config);
 		$config->append(array(
 			'destroy'	=> false,
-			'mime'		=> $this->_state->mime
+			'mime_type'		=> $this->_state->mime
 		));
 
-		$mime = explode('/', $this->_state->mime);
-		$mime = $mime[1];
-		$function = "image$mime";
+		$function = $this->getImageMethod($config->mime_type);
 		
-		header("Content-type:$config->mime");
+		header("Content-type:$config->mime_type");
 		$function($this->_src);
 		
 		if($config->destroy) {
 			$this->destroy();
 		}
 
+	}
+	
+	/**
+	 * Save the image to disk
+	 * 
+	 * return mixed Image path on success, false on failure
+	 */
+	public function save($config = array())
+	{
+		// Retrieve the original filename
+		$parts = explode('/',$this->_original);
+		$filename = JFile::stripExt($parts[count($parts)-1]);
+		
+		$config = new KConfig($config);
+		$config->append(array(
+			'destroy'	=> true,
+			'mime_type'	=> $this->_state->mime,
+			'path'		=> 'media/com_files/tmp/',
+			'name'		=> $filename
+		));
+		
+		// Define the file path and name
+		$file = $config->path.$config->name.$this->_getExt($config->mime_type);
+
+		// Save the image
+		$method = $this->getImageMethod($config->mime_type);
+		if($method($this->_src, $this->_base_path.$file)) {
+		
+			if($config->destroy) {
+				$this->destroy();
+			}
+			
+			return JUri::root().'/'.$file;
+		}
+		else {
+		
+			if($config->destroy) {
+				$this->destroy();
+			}
+			
+			return false;
+		}
+	}
+	
+	
+	/**
+	 * Renders the HTML image tag for output
+	 * 
+	 * return HTML
+	 */
+	public function displayToTag($config = array())
+	{
+		$config = new KConfig($config);
+		$config->append(array(
+			'destroy'	=> false,
+			'mime_type'		=> $this->_state->mime
+		));
+
+		// Get the methodname
+		$function = $this->getImageMethod($config->mime_type);
+		
+		// Output the data to buffer
+		ob_start();
+		
+		header("Content-type:$config->mime_type");
+
+		$function($this->_src);
+		
+		$src = ob_get_contents();
+		ob_end_clean();
+		
+		// Encode the data
+		$base64_data = base64_encode($src);
+		
+		$html = '';
+		$html .= '<img src="data:'.$config->mime_type.';base64,{'.$base64_data.'}" />';
+		
+		echo $html;
+		
+		if($config->destroy) {
+			$this->destroy();
+		}
+	}
+	
+	/*
+	 * Returns the correct image extension
+	 * 
+	 * return string
+	 */
+	protected function _getExt($content_type)
+	{
+		switch($content_type) {
+			case 'image/jpeg':
+				$ext = '.jpg';
+				break;
+			case 'image/png':
+				$ext = '.png';
+				break;
+			case 'image/gif':
+				$ext = '.gif';
+				break;
+		}
+		
+		return $ext;
+	}
+	
+	/*
+	 * Returns the correct image method name
+	 * 
+	 * return string
+	 */
+	protected function getImageMethod($content_type)
+	{
+		switch($content_type) {
+			case 'image/jpeg':
+				$method = 'imagejpeg';
+				break;
+			case 'image/png':
+				$method = 'imagepng';
+				break;
+			case 'image/gif':
+				$method = 'imagegif';
+				break;
+		}
+				
+		return $method;
 	}
 	
 	/**
