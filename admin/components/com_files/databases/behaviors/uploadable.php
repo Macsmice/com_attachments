@@ -24,8 +24,14 @@ class ComFilesDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
 	 *
 	 * @var	string
 	 */
+	protected $_files;
+	protected $_file_path;
+	protected $_max_size;
+	protected $_allowed_mime;
 	protected $_separator;
-
+	protected $_filename;
+	protected $_store;
+	
 	/**
 	 * Constructor.
 	 *
@@ -146,7 +152,6 @@ class ComFilesDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
 		jimport('joomla.filesystem.folder');
 		
 		$file = $this->_files->get($context->current_fileindex);
-		var_dump($file);
 
 		// Check if the uploaded file's mime type matches one of the allowed types
 		if(!in_array($file['type'], $this->_allowed_mime->toArray())) {
@@ -161,14 +166,14 @@ class ComFilesDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
 		}
 		
 		// Sanitize the file name
-		$sanitized = $this->_createFilename($context);
+		$filename = $this->_createFilename($context);
 		
 		// Create the directory if it doesn't yet exist
 		$filepath = JPATH_SITE.'/'.$this->_file_path;
 		JFolder::create($filepath);
 		
 		// Move the file
-		JFile::copy($file->get('tmp_name'), $filepath.$sanitized);
+		JFile::copy($file->get('tmp_name'), $filepath.$filename);
 	}
 	
 	/**
@@ -180,12 +185,6 @@ class ComFilesDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
 	{
 		$config = array();
 		$config['separator'] = $this->_separator;
-		$column = $context->current_fileindex;
-				
-		// Make sure the filename fits the column's character length if it needs to be stored into a database
-		if($this->_store) {
-			$config['length'] = $context->caller->getColumn($column)->length;
-		}
 		
 		//Create the filter
 		$filter = KFactory::tmp('lib.koowa.filter.filename', $config);
@@ -199,29 +198,33 @@ class ComFilesDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
 	 */
 	protected function _createFilename(KCommandContext $context)
 	{
-		$row   = $context->data;
-		
 		//Create the slug filter
-		$column   = $context->current_fileindex;
-		$filter   = $this->_createFilter($context);
-		$file	  = $this->_files->get($column);
-		$filename = $this->_filename ? $this->_filename : $file->get('name');
-		$filepath = JPATH_SITE.'/'.$this->_file_path;
+		$column    = $context->current_fileindex;
+		$file	   = $this->_files->get($column);
+		$filename  = $this->_filename ? $this->_filename : $file->get('name');
+		$filepath  = JPATH_SITE.'/'.$this->_file_path;
 		
-		$sanitized = $filter->sanitize($file['name']);
+		// Seperate the file name and the extension
+		$extension = JFile::getExt($filename);
+		$filename  = JFile::stripExt($filename);
 
+		$filename  = $this->_createFilter($context)->sanitize($filename);
+		
 		// Check for duplicate file names and rename by prepending a number
-		$i=null;
-		if (JFile::exists($filepath.$sanitized)) {
-			$i=0; 
-			do { $sanitized = $i++.'-'.$sanitized; } while (JFile::exists($filepath.$sanitized));	
+		if(JFile::exists(JPATH_SITE.'/'.$filename.'.'.$extension)) {
+			$i = 1;
+			while(JFile::exists(JPATH_SITE.'/'.$filename.'-'.$i.$extension)) {
+				$i++;
+			}
+			$filename = $filename.'-'.$i;
 		}
 		
 		// Store the filepath into the database
+		$row = $context->data;
 		if($this->_store && isset($row->$column)) {
-			$row->$column = $sanitized;
+			$row->$column = $this->_file_path.$filename.'.'.$extension;
 		}
-		
-		return $sanitized;
+
+		return $filename.'.'.$extension;
 	}
 }
