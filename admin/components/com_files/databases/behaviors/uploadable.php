@@ -64,7 +64,7 @@ class ComFilesDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
     	 */
     	$config->append(array(
     		'files'   			=> KRequest::get('files', 'raw'),
-    		'file_path' 		=> 'media/com_files/raw/',
+    		'file_path' 		=> 'tmp/',
     		'max_size'			=> 4194304,
 	    	'allowed_mime' 		=> array(
 					    			'image/jpeg', 
@@ -98,12 +98,8 @@ class ComFilesDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
 	public function getMixableMethods(KObject $mixer = null)
 	{
 		$methods	= array();
-		$column		= $this->_column;
 		
-		if(isset($mixer->$column)) {
-			$methods = parent::getMixableMethods($mixer);
-		}
-
+		$methods = parent::getMixableMethods($mixer);
 		return $methods;
 	}
 
@@ -124,6 +120,7 @@ class ComFilesDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
 				continue;
 			}
 		}
+		//exit;
 	}
 	
 	protected function _beforeTableInsert(KCommandContext $context)
@@ -138,6 +135,7 @@ class ComFilesDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
 				continue;
 			}
 		}
+		//exit;
 	}
 	
 	
@@ -154,7 +152,7 @@ class ComFilesDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
 		jimport('joomla.filesystem.folder');
 		
 		$file = $this->_files->get($context->current_fileindex);
-
+		
 		// Check if the uploaded file's mime type matches one of the allowed types
 		if(!in_array($file['type'], $this->_allowed_mime->toArray())) {
 			// Return error
@@ -169,11 +167,17 @@ class ComFilesDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
 		
 		// Sanitize the file name
 		$filename = $this->_createFilename($context);
+		//$filename = JFile::makeSafe($file['name']);
 		
 		// Create the directory if it doesn't yet exist
 		$filepath = JPATH_SITE.'/'.$this->_file_path;
-		JFolder::create($filepath);
+		if(!JFolder::exists($filepath)) {
+			JFolder::create($filepath);
+		}
 		
+		// Set write permissions
+		JPath::setPermissions($filepath);
+
 		// Move the file
 		JFile::copy($file->get('tmp_name'), $filepath.$filename);
 	}
@@ -213,20 +217,23 @@ class ComFilesDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
 		$filename  = $this->_createFilter($context)->sanitize($filename);
 		
 		// Check for duplicate file names and rename by prepending a number
-		if(JFile::exists(JPATH_SITE.'/'.$filename.'.'.$extension)) {
+		if(JFile::exists($filepath.$filename.'.'.$extension)) {
 			$i = 1;
-			while(JFile::exists(JPATH_SITE.'/'.$filename.'-'.$i.$extension)) {
+			while(JFile::exists($filepath.$filename.'-'.$i.$extension)) {
 				$i++;
 			}
 			$filename = $filename.'-'.$i;
 		}
 		
+		// Append the correct extension
+		$filename = $filename.'.'.$extension;
+		
 		// Store the filepath into the database
 		$row = $context->data;
 		if($this->_store && isset($row->$column)) {
-			$row->$column = $this->_file_path.$filename.'.'.$extension;
+			$row->$column = $filename;
 		}
 
-		return $filename.'.'.$extension;
+		return $filename;
 	}
 }

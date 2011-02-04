@@ -6,6 +6,7 @@ class ComFilesModelImages extends KModelDefault
 	protected $_original;
 	protected $_original_info;
 	protected $_src;
+	protected $_state;
 	
 	public function __construct(KConfig $config)
 	{
@@ -21,9 +22,6 @@ class ComFilesModelImages extends KModelDefault
 		}
 
 		$this->_state
-// 			->insert('width',	'int',		$this->_original_info[0])
-// 			->insert('height',	'int',		$this->_original_info[1])
-// 			->insert('mime',	'string',	$this->_original_info['mime'])
 			->insert('width',	'int')
 			->insert('height',	'int')
 			->insert('mime',	'string')
@@ -35,7 +33,7 @@ class ComFilesModelImages extends KModelDefault
 	protected function _initialize(KConfig $config)
     {
     	$config->append(array(
-    		'file_path' 	=> 'media/com_files/raw/',
+    		'file_path' 	=> 'tmp/',
     		'base_path' 	=> JPATH_SITE.'/'
     	))->append(array(
     		'original_info'	=> getimagesize($config->base_path.$config->file_path.$config->original),
@@ -51,8 +49,8 @@ class ComFilesModelImages extends KModelDefault
 	 */
 	protected function _setImage()
 	{
-		$original = JUri::root().$this->_file_path.$this->_original;
-
+		$original = $this->_base_path.$this->_file_path.$this->_original;
+		
 		switch($this->_original_info['mime']) {
 			case 'image/gif':
 				$this->_src = imagecreatefromgif($original);
@@ -100,17 +98,17 @@ class ComFilesModelImages extends KModelDefault
 		$config = new KConfig($config);
 		$config->append(array(
 			'destroy'	=> true,
-			'mime_type'	=> $this->_state->mime,
+			'mime'	=> $this->_state->mime ? $this->_state->mime : $this->_original_info['mime'],
 			'path'		=> 'media/com_files/tmp/',
 			'name'		=> $filename
 		));
 		
 		// Define the file path and name
-		$file = $config->path.$config->name.$this->_getExt($this->_state->mime);
+		$file = $config->path.$config->name.$this->_getExt($config->mime);
 
 		// Save the image
-		$method = $this->getImageMethod($this->_state->mime);
-		if($method($this->_src, $this->_base_path.$file)) {
+		$method = $this->getImageMethod($config->mime);
+		if($method($this->_src, $this->_base_path.$file, 100)) {
 		
 			if($config->destroy) {
 				$this->destroy();
@@ -134,32 +132,37 @@ class ComFilesModelImages extends KModelDefault
 	 * 
 	 * return HTML
 	 */
-	public function displayToTag(boolean $destroy)
+	public function displayToTag($config = array())
 	{
+	
+		$config = new KConfig($config);
+		$config->append(array(
+			'destroy'	=> true,
+			'mime'	=> $this->_state->mime ? $this->_state->mime : $this->_original_info['mime'],
+		));
+
 		// Get the methodname
-		$function = $this->getImageMethod($this->_state->mime);
+		$mime = $this->_state->mime ? $this->_state->mime : $this->_original_info['mime'];
+		$function = $this->getImageMethod($config->mime);
 		
 		// Output the data to buffer
 		ob_start();
-		
-		header("Content-type:{$this->_state->mime}");
-
+		header("Content-type:{$config->mime}");
 		$function($this->_src);
-		
 		$src = ob_get_contents();
 		ob_end_clean();
+		
+		if($config->destroy) {
+			$this->destroy();
+		}
 		
 		// Encode the data
 		$base64_data = base64_encode($src);
 		
 		$html = '';
-		$html .= '<img src="data:'.$this->_state->mime.';base64,{'.$base64_data.'}" />';
+		$html .= '<img src="data:'.$config->mime.';base64,{'.$base64_data.'}" />';
 		
 		echo $html;
-		
-		if($destroy) {
-			$this->destroy();
-		}
 	}
 	
 	/*
@@ -223,15 +226,17 @@ class ComFilesModelImages extends KModelDefault
 	 */
 	public function destroy() {
 		 imagedestroy($this->_src);
+		 
+		 return $this;
 	}
-	
 		
 	public function resize($config = array())
 	{
 		$coords = $this->_getCoordinates();
 				
 		$canvas = imagecreatetruecolor($coords['dst_w'], $coords['dst_h']);
-		imagecopyresized(
+		
+		imagecopyresampled(
 			$canvas, 
 			$this->_src, 
 			$coords['dst_x'], 
@@ -243,6 +248,7 @@ class ComFilesModelImages extends KModelDefault
 			$coords['src_w'], 
 			$coords['src_h']
 			);
+			
 		$this->_src = $canvas;
 		
 		return $this;
@@ -272,6 +278,21 @@ class ComFilesModelImages extends KModelDefault
 		$dst_h = $this->_state->height;
 		$src_w = $this->_original_info[0];
 		$src_h = $this->_original_info[1];
+		
+		// Fallback for missing destination width
+		if(!$dst_w && $dst_h) {
+			$dst_w = floor($this->calculateWidth($dst_h));
+		}
+
+		// Fallback for missing destination height
+		if($dst_w && !$dst_h) {
+			$dst_h = floor($this->calculateHeight($dst_w));
+		}
+
+		// If no width or height don't set any crop coordinates and return original size;
+		if(!$dst_w && !$dst_h) {
+			return array('dst_x'=>0, 'dst_y'=>0, 'src_x'=>0, 'src_y'=>0, 'dst_w'=>$src_w, 'dst_h'=>$src_h, 'src_w'=>$src_w, 'src_h'=>$src_h);
+		}
 				
 		$dst_x = 0;
 		$dst_y = 0;
@@ -281,9 +302,7 @@ class ComFilesModelImages extends KModelDefault
 		$dst_prop = $this->getProportion($dst_w, $dst_h);
 		$src_prop = $this->getProportion($src_w, $src_h);
 		
-				
-		// Image is wider, 
-		// calculate the height of the image before cropping
+		// Image is wider, calculate the height of the image before cropping
 		if($dst_prop > $src_prop) {
 
 			$src_crop_h = $src_w/$dst_prop;
