@@ -236,6 +236,11 @@ class ComFilesModelImages extends KModelDefault
 				
 		$canvas = imagecreatetruecolor($coords['dst_w'], $coords['dst_h']);
 		
+		// Don't do anything if there's no resizing needed
+		if($coords['dst_w']==$coords['src_w'] && $coords['dst_h']==$coords['src_h']) {
+			return $this;
+		}
+
 		imagecopyresampled(
 			$canvas, 
 			$this->_src, 
