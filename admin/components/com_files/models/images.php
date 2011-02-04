@@ -107,8 +107,32 @@ class ComFilesModelImages extends KModelDefault
 		$file = $config->path.$config->name.$this->_getExt($config->mime);
 
 		// Save the image
+		
+		/*
+		 * To do:
+		 *
+		 * if the destination size and mime are equal to the original, than don't save the image and just return the original
+		 */
 		$method = $this->getImageMethod($config->mime);
-		if($method($this->_src, $this->_base_path.$file, 100)) {
+		
+		switch($config->mime)
+		{
+			case 'image/png':
+				$compression = 0;
+				$saved = $method($this->_src, $this->_base_path.$file, $compression);
+				break;
+			case 'image/jpg':
+				$quality = 1000;
+				$saved = $method($this->_src, $this->_base_path.$file, $quality);
+				break;
+			case 'image/gif':
+			default:
+				$saved = $method($this->_src, $this->_base_path.$file);
+				break;
+				
+		}
+		
+		if($saved) {
 		
 			if($config->destroy) {
 				$this->destroy();
@@ -233,12 +257,31 @@ class ComFilesModelImages extends KModelDefault
 	public function resize($config = array())
 	{
 		$coords = $this->_getCoordinates();
-				
-		$canvas = imagecreatetruecolor($coords['dst_w'], $coords['dst_h']);
 		
 		// Don't do anything if there's no resizing needed
 		if($coords['dst_w']==$coords['src_w'] && $coords['dst_h']==$coords['src_h']) {
 			return $this;
+		}
+				
+		$canvas = imagecreatetruecolor($coords['dst_w'], $coords['dst_h']);
+		
+		// Retain transparency for gif and png images, adapted ffrom: http://mediumexposure.com/smart-image-resizing-while-preserving-transparency-php-and-gd-library/
+		if($this->_original_info['mime'] == 'image/gif' || $this->_original_info['mime'] == 'image/png') {
+
+			$transparancy_idx = imagecolortransparent($this->_src);
+
+			if($this->_original_info['mime'] == 'image/png') {
+				imagealphablending($canvas, false);
+				$transparancy_clr = imagecolorallocatealpha($canvas, 0, 0, 0, 127);
+				imagefill($canvas, 0, 0, imagecolorallocatealpha($canvas, 0, 0, 0, 127));
+				imagesavealpha($canvas, true);	
+			}
+			else {
+        		$transparancy_clr    = imagecolorsforindex($this->_src, $transparancy_idx);
+		        $transparancy_idx    = imagecolorallocate($canvas, $transparancy_clr['red'], $transparancy_clr['green'], $transparancy_clr['blue']);
+				imagefill($canvas, 0, 0, $transparancy_idx);
+				imagecolortransparent($canvas, $transparancy_idx);
+			}
 		}
 
 		imagecopyresampled(
