@@ -265,7 +265,7 @@ class ComFilesModelImages extends KModelDefault
 				
 		$canvas = imagecreatetruecolor($coords['dst_w'], $coords['dst_h']);
 		
-		// Retain transparency for gif and png images, adapted ffrom: http://mediumexposure.com/smart-image-resizing-while-preserving-transparency-php-and-gd-library/
+		// Retain transparency for gif and png images, adapted from: http://mediumexposure.com/smart-image-resizing-while-preserving-transparency-php-and-gd-library/
 		if($this->_original_info['mime'] == 'image/gif' || $this->_original_info['mime'] == 'image/png') {
 
 			$transparancy_idx = imagecolortransparent($this->_src);
