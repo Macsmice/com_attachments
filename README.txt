@@ -17,7 +17,7 @@ KFactory::tmp('admin::com.files.model.images', array('original'=>$row->logo, 'fi
     ->save(array('path'=>'media/com_files/raw/display/', 'name'=>'mycroppedimage'));
     ;
 
-Saves a proportionally sized anc cropped jpeg image (200px x 200px) in the directory media/com_files/raw/display/ under the mycroppedimage.jpg
+Saves a proportionally sized and cropped jpeg image (200px x 200px) in the directory media/com_files/raw/display/ under the name mycroppedimage.jpg
 
 
 KFactory::tmp('admin::com.files.model.images', array('original'=>$row->logo, 'file_path'=>'media/com_files/raw/'))
@@ -28,4 +28,4 @@ KFactory::tmp('admin::com.files.model.images', array('original'=>$row->logo, 'fi
     ->displayToBrowser();
     ;
 
-Outputs a proportionally sized anc cropped jpeg image (200px x 200px) tothe browser (for whatever it's worth). This method is alpha and not yet tested, so no guarantees ;)
+Outputs a proportionally sized and cropped jpeg image (200px x 200px) tothe browser (for whatever it's worth). This method is alpha and not yet tested, so no guarantees ;)

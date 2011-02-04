@@ -122,7 +122,8 @@ class ComFilesModelImages extends KModelDefault
 				$saved = $method($this->_src, $this->_base_path.$file, $compression);
 				break;
 			case 'image/jpg':
-				$quality = 1000;
+			case 'image/jpeg':
+				$quality = 100;
 				$saved = $method($this->_src, $this->_base_path.$file, $quality);
 				break;
 			case 'image/gif':
