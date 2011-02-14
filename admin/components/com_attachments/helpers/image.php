@@ -3,7 +3,7 @@ jimport('joomla.filesystem.file');
 jimport('joomla.filesystem.folder');
 jimport('joomla.filesystem.path');
 
-class ComFilesHelperImage
+class ComAttachmentsHelperImage
 {   
 	
 	public function resize($config = array())

@@ -16,7 +16,7 @@
  * @package     Koowa_Database
  * @subpackage 	Behavior
  */
-class ComFilesDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
+class ComAttachmentsDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
 {
 	/**
 	 * Separator character / string to use for replacing non alphabetic

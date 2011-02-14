@@ -1,5 +1,5 @@
 <?php
-class ComFilesControllerImage extends ComDefaultControllerDefault 
+class ComAttachmentsControllerImage extends ComDefaultControllerDefault 
 { 
 
 	public function __construct(KConfig $config)

@@ -1,5 +1,5 @@
 <?php
-class ComFilesModelImages extends KModelDefault
+class ComAttachmentsModelImages extends KModelDefault
 {
 	protected $_file_path;
 	protected $_base_path;
