@@ -105,6 +105,11 @@ class ComAttachmentsModelImages extends KModelDefault
 		
 		// Define the file path and name
 		$file = $config->path.$config->name.$this->_getExt($config->mime);
+        
+        // Make sure the path is writable
+        if(!JFolder::exists($config->path)) {
+            JFolder::create($config->path);
+        }
 
 		// Save the image
 		
@@ -399,4 +404,11 @@ class ComAttachmentsModelImages extends KModelDefault
 		
 		return $dst_h / $src_h * $src_w;
 	}
+    
+    public function delete($path)
+    {
+         if( JFile::exists($path) ) {
+            JFile::delete($path);
+        }
+    }
 }
