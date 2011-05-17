@@ -11,7 +11,7 @@
 /**
  * Database Uploadable Behavior
  *
- * @author		Babs Gšsgens <babsgosgens@gmail.com>
+ * @author		Babs Gosgens <babsgosgens@gmail.com>
  * @category	Koowa
  * @package     Koowa_Database
  * @subpackage 	Behavior
@@ -32,7 +32,7 @@ class ComAttachmentsDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
 	protected $_filename;
 	protected $_store;
 	protected $_store_full_path;
-	
+
 	/**
 	 * Constructor.
 	 *
@@ -44,7 +44,7 @@ class ComAttachmentsDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
 
 		foreach($config as $key => $value) {
 			$this->{'_'.$key} = $value;
-		}		
+		}
 	}
 
 	/**
@@ -59,7 +59,7 @@ class ComAttachmentsDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
     {
     	/*
     	 * TO DO
-    	 * 
+    	 *
     	 * Get (some of) these values through component's parameters
     	 */
     	$config->append(array(
@@ -67,14 +67,14 @@ class ComAttachmentsDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
     		'file_path' 		=> 'tmp/',
     		'max_size'			=> 4194304,
 	    	'allowed_mime' 		=> array(
-					    			'image/jpeg', 
-					    			'image/jpg', 
-					    			'image/png', 
-					    			'image/gif', 
+					    			'image/jpeg',
+					    			'image/jpg',
+					    			'image/png',
+					    			'image/gif',
 					    			'application/pdf',
-	    							'application/zip', 
-					    			'application/msword', 
-					    			'application/vnd.ms-excel', 
+	    							'application/zip',
+					    			'application/msword',
+					    			'application/vnd.ms-excel',
 					    			'application/octet-stream'
 	    							),
     		'separator' 		=> '-',
@@ -98,7 +98,7 @@ class ComAttachmentsDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
 	public function getMixableMethods(KObject $mixer = null)
 	{
 		$methods	= array();
-		
+
 		$methods = parent::getMixableMethods($mixer);
 		return $methods;
 	}
@@ -122,7 +122,7 @@ class ComAttachmentsDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
 		}
 		//exit;
 	}
-	
+
 	protected function _beforeTableInsert(KCommandContext $context)
 	{
 		foreach($this->_files AS $column => $file)
@@ -137,22 +137,22 @@ class ComAttachmentsDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
 		}
 		//exit;
 	}
-	
-	
+
+
 	/**
 	 * Move the file
-	 * 
+	 *
 	 * @param KCommandContext $context
-	 * 
+	 *
 	 * @return true
 	 */
 	protected function _moveFile($context)
 	{
 		jimport('joomla.filesystem.file');
 		jimport('joomla.filesystem.folder');
-		
+
 		$file = $this->_files->get($context->current_fileindex);
-		
+
 		// Check if the uploaded file's mime type matches one of the allowed types
 		if(!in_array($file['type'], $this->_allowed_mime->toArray())) {
 			// Return error
@@ -164,24 +164,24 @@ class ComAttachmentsDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
 			// Return error
 			return false;
 		}
-		
+
 		// Sanitize the file name
 		$filename = $this->_createFilename($context);
 		//$filename = JFile::makeSafe($file['name']);
-		
+
 		// Create the directory if it doesn't yet exist
 		$filepath = JPATH_SITE.'/'.$this->_file_path;
 		if(!JFolder::exists($filepath)) {
 			JFolder::create($filepath);
 		}
-		
+
 		// Set write permissions
 		JPath::setPermissions($filepath);
 
 		// Move the file
 		JFile::copy($file->get('tmp_name'), $filepath.$filename);
 	}
-	
+
 	/**
 	 * Create a sluggable filter
 	 *
@@ -191,12 +191,12 @@ class ComAttachmentsDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
 	{
 		$config = array();
 		$config['separator'] = $this->_separator;
-		
+
 		//Create the filter
 		$filter = KFactory::tmp('lib.koowa.filter.filename', $config);
 		return $filter;
 	}
-	
+
 	/**
 	 * Create the actual filename
 	 *
@@ -209,13 +209,13 @@ class ComAttachmentsDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
 		$file	   = $this->_files->get($column);
 		$filename  = $this->_filename ? $this->_filename : $file->get('name');
 		$filepath  = JPATH_SITE.'/'.$this->_file_path;
-		
+
 		// Seperate the file name and the extension
 		$extension = JFile::getExt($filename);
 		$filename  = JFile::stripExt($filename);
 
 		$filename  = $this->_createFilter($context)->sanitize($filename);
-		
+
 		// Check for duplicate file names and rename by prepending a number
 		if(JFile::exists($filepath.$filename.'.'.$extension)) {
 			$i = 1;
@@ -224,10 +224,10 @@ class ComAttachmentsDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
 			}
 			$filename = $filename.'-'.$i;
 		}
-		
+
 		// Append the correct extension
 		$filename = $filename.'.'.$extension;
-		
+
 		// Store the filepath into the database
 		$row = $context->data;
 		if($this->_store && isset($row->$column)) {
