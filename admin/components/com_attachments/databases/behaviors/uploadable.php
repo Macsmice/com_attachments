@@ -63,23 +63,23 @@ class ComAttachmentsDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
     	 * Get (some of) these values through component's parameters
     	 */
     	$config->append(array(
-    		'files'   			=> KRequest::get('files', 'raw'),
-    		'file_path' 		=> 'tmp/',
-    		'max_size'			=> 4194304,
+    		'files'   		=> KRequest::get('files', 'raw'),
+    		'file_path' 		=> 'media/com_attachments/tmp/',
+    		'max_size'		=> 4194304,
 	    	'allowed_mime' 		=> array(
-					    			'image/jpeg',
-					    			'image/jpg',
-					    			'image/png',
-					    			'image/gif',
-					    			'application/pdf',
-	    							'application/zip',
-					    			'application/msword',
-					    			'application/vnd.ms-excel',
-					    			'application/octet-stream'
-	    							),
+                                            'image/jpeg',
+                                            'image/jpg',
+                                            'image/png',
+                                            'image/gif',
+                                            'application/pdf',
+                                            'application/zip',
+                                            'application/msword',
+                                            'application/vnd.ms-excel',
+                                            'application/octet-stream'
+                                            ),
     		'separator' 		=> '-',
     		'filename'  		=> '',
-			'store'				=> true,
+		'store'			=> true,
     		'store_full_path'	=> true
     	));
 
