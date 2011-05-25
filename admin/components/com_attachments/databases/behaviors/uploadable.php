@@ -64,7 +64,7 @@ class ComAttachmentsDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
     	 */
     	$config->append(array(
     		'files'   		=> KRequest::get('files', 'raw'),
-    		'file_path' 		=> 'media/com_attachments/tmp/',
+    		'file_path' 		=> 'tmp/',
     		'max_size'		=> 4194304,
 	    	'allowed_mime' 		=> array(
                                             'image/jpeg',
