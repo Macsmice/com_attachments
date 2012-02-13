@@ -193,7 +193,7 @@ class ComAttachmentsDatabaseBehaviorUploadable extends KDatabaseBehaviorAbstract
 		$config['separator'] = $this->_separator;
 
 		//Create the filter
-		$filter = KFactory::tmp('lib.koowa.filter.filename', $config);
+		$filter = KService::get('koowa:filter.filename', $config);
 		return $filter;
 	}
 
